@@ -12,8 +12,21 @@
 #define FPS (60)
 
 
-int main(void)
-{
+int collides(SDL_Rect rect1, SDL_Rect rect2) {
+    // if (this.pt.x < boxOther.pt.x + boxOther.w && boxOther.pt.x < this.pt.x + this.w) {
+        //     if (this.pt.y < boxOther.pt.y + boxOther.h && boxOther.pt.y < this.pt.y + this.h) {
+        //         return true;
+        //     }
+        // }
+    if (rect1.x < rect2.x + rect2.w && rect2.x < rect1.x + rect1.w) {
+        if (rect1.y < rect2.y + rect2.h && rect2.y < rect1.y + rect1.h) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int main(void) {
     // attempt to initialize graphics and timer system
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER) != 0) {
         printf("error initializing SDL: %s\n", SDL_GetError());
@@ -64,7 +77,7 @@ int main(void)
     SDL_QueryTexture(texPlayer, NULL, NULL, &rectPlayer.w, &rectPlayer.h);
     rectPlayer.w = 30;
     rectPlayer.h = 30;
-    float posPlayer[] = {(WINDOW_WIDTH - rectPlayer.w) / 2, (WINDOW_HEIGHT - rectPlayer.h) / 2}; // {x, y}
+    float posPlayer[2] = {(WINDOW_WIDTH - rectPlayer.w) / 2, (WINDOW_HEIGHT - rectPlayer.h) / 2}; // {x, y}
 
 
     // GHOSTS
@@ -97,18 +110,39 @@ int main(void)
         SDL_QueryTexture(texGhost, NULL, NULL, &rectGhost.w, &rectGhost.h);
         rectGhost.w = 30;
         rectGhost.h = 30;
-        posGhostsArr[i][0] = 50 * i; // x
-        posGhostsArr[i][1] = 50; // y
+        posGhostsArr[i][0] = rand() % (WINDOW_WIDTH - rectGhost.w); // x
+        posGhostsArr[i][1] = rand() % (WINDOW_HEIGHT - rectGhost.h); // y
         rectGhost.x = (int) posGhostsArr[i][0];
         rectGhost.y = (int) posGhostsArr[i][1];
         rectGhosts[i] = rectGhost;
     }
 
-    for (int i = 0; i < 3; i++) {
-        printf("Pos = (X: %f, Y: %f)\n", posGhostsArr[i][0], posGhostsArr[i][1]);
-        printf("Rect= (X: %d, Y: %d) - (W: %d, H: %d)\n", rectGhosts[i].x, rectGhosts[i].y, rectGhosts[i].w, rectGhosts[i].h);
 
+    SDL_Surface* surfCoin = IMG_Load("resources/coin.png");
+    if (!surfCoin) {
+        printf("error creating surface\n");
+        SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(win);
+        SDL_Quit();
+        return 1;
     }
+    // load the image data into the graphics hardware's memory
+    SDL_Texture* texCoin = SDL_CreateTextureFromSurface(rend, surfCoin);
+    SDL_FreeSurface(surfCoin);
+    if (!texPlayer) {
+        printf("error creating texture: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(win);
+        SDL_Quit();
+        return 1;
+    }
+    // struct to hold the position and size of the sprite
+    SDL_Rect rectCoin;
+    // get and scale the dimensions of texture
+    SDL_QueryTexture(texCoin, NULL, NULL, &rectCoin.w, &rectCoin.h);
+    rectCoin.w = 30;
+    rectCoin.h = 30;
+    float posCoin[2] = {rand() % (WINDOW_WIDTH - rectCoin.w), rand() % (WINDOW_HEIGHT - rectCoin.h)};
 
 
     // player direction
@@ -173,18 +207,43 @@ int main(void)
             int difX = posPlayer[0] - posGhostsArr[i][0];
             int difY = posPlayer[1] - posGhostsArr[i][1];
             if (abs(difX) > abs(difY)) {
-                posGhostsArr[i][0] += difX / FPS;
+                if (difX > 0) { // on right
+                    posGhostsArr[i][0] += SPEED/2 * 1/FPS;
+                }
+                else {
+                    posGhostsArr[i][0] -= SPEED/2 * 1/FPS;
+                }
             }
             else {
-                posGhostsArr[i][1] += difY / FPS;
+                if (difY > 0) { // on the down
+                    posGhostsArr[i][1] += SPEED/2 * 1/FPS;
+                }
+                else {
+                    posGhostsArr[i][1] -= SPEED/2 * 1/FPS;
+                }
             }
             rectGhosts[i].x = (int) posGhostsArr[i][0];
             rectGhosts[i].y = (int) posGhostsArr[i][1];
         }
 
         // set the player positions in the struct
+        
         rectPlayer.x = (int) posPlayer[0];
         rectPlayer.y = (int) posPlayer[1];
+
+        if (collides(rectPlayer, rectCoin)) {
+            posCoin[0] = rand() % (WINDOW_WIDTH - rectCoin.w);
+            posCoin[1] = rand() % (WINDOW_HEIGHT - rectCoin.h);
+        }
+        for (int i = 0; i < 3; i++) {
+            if (collides(rectPlayer, rectGhosts[i])) {
+                posGhostsArr[i][0] = rand() % (WINDOW_WIDTH - rectGhosts[i].w);
+                posGhostsArr[i][1] = rand() % (WINDOW_HEIGHT - rectGhosts[i].h);
+            }
+        }
+
+        rectCoin.x = (int) posCoin[0];
+        rectCoin.y = (int) posCoin[1];
 
         // DRAW THE FRAME
         // clear the window
@@ -195,7 +254,8 @@ int main(void)
         for (int i = 0; i < 3; i++) {
             SDL_RenderCopy(rend, texGhost, NULL, &rectGhosts[i]);
         }
-        
+        SDL_RenderCopy(rend, texCoin, NULL, &rectCoin);
+
         SDL_RenderPresent(rend);
 
         // wait 1/FPSth of a second
@@ -205,6 +265,7 @@ int main(void)
     // clean up resources before exiting
     SDL_DestroyTexture(texPlayer);
     SDL_DestroyTexture(texGhost);
+    SDL_DestroyTexture(texCoin);
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(win);
     SDL_Quit();
