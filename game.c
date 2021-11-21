@@ -1,7 +1,3 @@
-/**
- * hello6_keyboard.c - Move the sprite using the arrow keys or WASD
- */
-
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
@@ -71,7 +67,7 @@ int main(void)
     float posPlayer[] = {(WINDOW_WIDTH - rectPlayer.w) / 2, (WINDOW_HEIGHT - rectPlayer.h) / 2}; // {x, y}
 
 
-    // GHOST
+    // GHOSTS
     // load the image into memory using SDL_image library function
     SDL_Surface* surfGhost = IMG_Load("resources/ghost.png");
     if (!surfGhost) {
@@ -91,18 +87,24 @@ int main(void)
         SDL_Quit();
         return 1;
     }
-    // struct to hold the position and size of the sprite
-    SDL_Rect rectGhost;
-    // get and scale the dimensions of texture
-    SDL_QueryTexture(texGhost, NULL, NULL, &rectGhost.w, &rectGhost.h);
-    rectGhost.w = 30;
-    rectGhost.h = 30;
-    float posGhost[] = {50, 50}; // {x, y}
+
+    float posGhostsArr[3][2]; // why
+    SDL_Rect rectGhosts[3];
+    for (int i = 0; i < 3; i++) {    
+        // struct to hold the position and size of the sprite
+        SDL_Rect rectGhost;
+        // get and scale the dimensions of texture
+        SDL_QueryTexture(texGhost, NULL, NULL, &rectGhost.w, &rectGhost.h);
+        rectGhost.w = 30;
+        rectGhost.h = 30;
+        posGhostsArr[i][0] = 50 * i; // x
+        posGhostsArr[i][1] = 50; // y
+        rectGhosts[i] = rectGhost;
+    }
 
 
     // player direction
     int dir = 0; // 1, 2, 3, 4 :: up, down, left, right
-    clock_t t0, t1;
 
     // set to 1 when window close button is pressed
     int closeRequested = 0;
@@ -110,7 +112,6 @@ int main(void)
     // animation loop
     while (!closeRequested) {
         // process events
-        t0 = clock();
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
@@ -159,21 +160,23 @@ int main(void)
         if (posPlayer[1] >= WINDOW_HEIGHT - rectPlayer.h) posPlayer[1] = WINDOW_HEIGHT - rectPlayer.h;
 
         // move ghost
-        int difX = posPlayer[0] - posGhost[0];
-        int difY = posPlayer[1] - posGhost[1];
-        if (abs(difX) > abs(difY)) {
-            posGhost[0] += difX / FPS;
-        }
-        else {
-            posGhost[1] += difY / FPS;
-        }
+        // int difX = posPlayer[0] - posGhostsArr[0][0];
+        // int difY = posPlayer[1] - posGhostsArr[0][1];
+        // printf("difX: %d difY: %d\n", difX, difY);
+        // if (abs(difX) > abs(difY)) {
+        //     posGhostsArr[0][0] += difX / FPS;
+        // }
+        // else {
+        //     posGhostsArr[0][1] += difY / FPS;
+        // }
 
-        // set the positions in the struct
-        rectPlayer.x = (int) posPlayer[0];
-        rectPlayer.y = (int) posPlayer[1];
+        // // set the positions in the struct
+        // rectPlayer.x = (int) posPlayer[0];
+        // rectPlayer.y = (int) posPlayer[1];
 
-        rectGhost.x = (int) posGhost[0];
-        rectGhost.y = (int) posGhost[1];
+        // rectGhost.x = (int) posGhostsArr[0][0];
+        // rectGhost.y = (int) posGhostsArr[0][1];
+        // printf("X: %d Y: %d\n", rectGhost.x, rectGhost.y);
 
         // DRAW THE FRAME
         // clear the window
@@ -181,13 +184,14 @@ int main(void)
 
         // draw the image to the window
         SDL_RenderCopy(rend, texPlayer, NULL, &rectPlayer);
-        SDL_RenderCopy(rend, texGhost, NULL, &rectGhost);
+        // for (int i = 0; i < 3; i++) {
+        //     SDL_RenderCopy(rend, texGhost, NULL, &rectGhosts[i]);
+        // }
+        // SDL_RenderCopy(rend, texGhost, NULL, &rectGhosts[0]);
+        
         SDL_RenderPresent(rend);
 
-        // wait 1/60th of a second
-        t1 = clock();
-        printf("Clock taken: %ld\n", (t1 - t0));
-        int delay = (t1 - t0);
+        // wait 1/FPSth of a second
         SDL_Delay(1000/FPS);
     }
     
