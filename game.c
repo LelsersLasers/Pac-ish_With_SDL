@@ -68,7 +68,7 @@ int main(void)
 
 
     // GHOSTS
-    // load the image into memory using SDL_image library function
+    //load the image into memory using SDL_image library function
     SDL_Surface* surfGhost = IMG_Load("resources/ghost.png");
     if (!surfGhost) {
         printf("error creating surface\n");
@@ -88,7 +88,7 @@ int main(void)
         return 1;
     }
 
-    float posGhostsArr[3][2]; // why
+    float posGhostsArr[3][2];
     SDL_Rect rectGhosts[3];
     for (int i = 0; i < 3; i++) {    
         // struct to hold the position and size of the sprite
@@ -99,7 +99,15 @@ int main(void)
         rectGhost.h = 30;
         posGhostsArr[i][0] = 50 * i; // x
         posGhostsArr[i][1] = 50; // y
+        rectGhost.x = (int) posGhostsArr[i][0];
+        rectGhost.y = (int) posGhostsArr[i][1];
         rectGhosts[i] = rectGhost;
+    }
+
+    for (int i = 0; i < 3; i++) {
+        printf("Pos = (X: %f, Y: %f)\n", posGhostsArr[i][0], posGhostsArr[i][1]);
+        printf("Rect= (X: %d, Y: %d) - (W: %d, H: %d)\n", rectGhosts[i].x, rectGhosts[i].y, rectGhosts[i].w, rectGhosts[i].h);
+
     }
 
 
@@ -111,6 +119,7 @@ int main(void)
     
     // animation loop
     while (!closeRequested) {
+        // printf("hello\n");
         // process events
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -160,23 +169,22 @@ int main(void)
         if (posPlayer[1] >= WINDOW_HEIGHT - rectPlayer.h) posPlayer[1] = WINDOW_HEIGHT - rectPlayer.h;
 
         // move ghost
-        // int difX = posPlayer[0] - posGhostsArr[0][0];
-        // int difY = posPlayer[1] - posGhostsArr[0][1];
-        // printf("difX: %d difY: %d\n", difX, difY);
-        // if (abs(difX) > abs(difY)) {
-        //     posGhostsArr[0][0] += difX / FPS;
-        // }
-        // else {
-        //     posGhostsArr[0][1] += difY / FPS;
-        // }
+        for (int i = 0; i < 3; i++) {
+            int difX = posPlayer[0] - posGhostsArr[i][0];
+            int difY = posPlayer[1] - posGhostsArr[i][1];
+            if (abs(difX) > abs(difY)) {
+                posGhostsArr[i][0] += difX / FPS;
+            }
+            else {
+                posGhostsArr[i][1] += difY / FPS;
+            }
+            rectGhosts[i].x = (int) posGhostsArr[i][0];
+            rectGhosts[i].y = (int) posGhostsArr[i][1];
+        }
 
-        // // set the positions in the struct
-        // rectPlayer.x = (int) posPlayer[0];
-        // rectPlayer.y = (int) posPlayer[1];
-
-        // rectGhost.x = (int) posGhostsArr[0][0];
-        // rectGhost.y = (int) posGhostsArr[0][1];
-        // printf("X: %d Y: %d\n", rectGhost.x, rectGhost.y);
+        // set the player positions in the struct
+        rectPlayer.x = (int) posPlayer[0];
+        rectPlayer.y = (int) posPlayer[1];
 
         // DRAW THE FRAME
         // clear the window
@@ -184,10 +192,9 @@ int main(void)
 
         // draw the image to the window
         SDL_RenderCopy(rend, texPlayer, NULL, &rectPlayer);
-        // for (int i = 0; i < 3; i++) {
-        //     SDL_RenderCopy(rend, texGhost, NULL, &rectGhosts[i]);
-        // }
-        // SDL_RenderCopy(rend, texGhost, NULL, &rectGhosts[0]);
+        for (int i = 0; i < 3; i++) {
+            SDL_RenderCopy(rend, texGhost, NULL, &rectGhosts[i]);
+        }
         
         SDL_RenderPresent(rend);
 
