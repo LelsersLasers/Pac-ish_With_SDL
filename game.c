@@ -27,6 +27,7 @@ int collides(SDL_Rect rect1, SDL_Rect rect2) {
 }
 
 int main(void) {
+    srand(time(NULL));
     // attempt to initialize graphics and timer system
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER) != 0) {
         printf("error initializing SDL: %s\n", SDL_GetError());
@@ -85,6 +86,7 @@ int main(void) {
     SDL_Surface* surfGhost = IMG_Load("resources/ghost.png");
     if (!surfGhost) {
         printf("error creating surface\n");
+        SDL_DestroyTexture(texPlayer);
         SDL_DestroyRenderer(rend);
         SDL_DestroyWindow(win);
         SDL_Quit();
@@ -95,6 +97,7 @@ int main(void) {
     SDL_FreeSurface(surfGhost);
     if (!texGhost) {
         printf("error creating texture: %s\n", SDL_GetError());
+        SDL_DestroyTexture(texPlayer);
         SDL_DestroyRenderer(rend);
         SDL_DestroyWindow(win);
         SDL_Quit();
@@ -121,6 +124,8 @@ int main(void) {
     SDL_Surface* surfCoin = IMG_Load("resources/coin.png");
     if (!surfCoin) {
         printf("error creating surface\n");
+        SDL_DestroyTexture(texPlayer);
+        SDL_DestroyTexture(texGhost);
         SDL_DestroyRenderer(rend);
         SDL_DestroyWindow(win);
         SDL_Quit();
@@ -131,6 +136,8 @@ int main(void) {
     SDL_FreeSurface(surfCoin);
     if (!texPlayer) {
         printf("error creating texture: %s\n", SDL_GetError());
+        SDL_DestroyTexture(texPlayer);
+        SDL_DestroyTexture(texGhost);
         SDL_DestroyRenderer(rend);
         SDL_DestroyWindow(win);
         SDL_Quit();
@@ -145,6 +152,8 @@ int main(void) {
     float posCoin[2] = {rand() % (WINDOW_WIDTH - rectCoin.w), rand() % (WINDOW_HEIGHT - rectCoin.h)};
 
 
+    int score = 0;
+    printf("Score: %d\n", score);
     // player direction
     int dir = 0; // 1, 2, 3, 4 :: up, down, left, right
 
@@ -153,7 +162,6 @@ int main(void) {
     
     // animation loop
     while (!closeRequested) {
-        // printf("hello\n");
         // process events
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -234,11 +242,12 @@ int main(void) {
         if (collides(rectPlayer, rectCoin)) {
             posCoin[0] = rand() % (WINDOW_WIDTH - rectCoin.w);
             posCoin[1] = rand() % (WINDOW_HEIGHT - rectCoin.h);
+            score += 1;
+            printf("Score: %d\n", score);
         }
         for (int i = 0; i < 3; i++) {
             if (collides(rectPlayer, rectGhosts[i])) {
-                posGhostsArr[i][0] = rand() % (WINDOW_WIDTH - rectGhosts[i].w);
-                posGhostsArr[i][1] = rand() % (WINDOW_HEIGHT - rectGhosts[i].h);
+                closeRequested = 1;
             }
         }
 
@@ -261,6 +270,8 @@ int main(void) {
         // wait 1/FPSth of a second
         SDL_Delay(1000/FPS);
     }
+    printf("\n\nYOU DIED! Score: %d\n", score);
+    SDL_Delay(3000);
     
     // clean up resources before exiting
     SDL_DestroyTexture(texPlayer);
